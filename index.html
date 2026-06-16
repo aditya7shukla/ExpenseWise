@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Personal Expense Tracker</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      color: #1f2933; background: #f5f7fa;
+    }
+    body { margin: 0; padding: 24px; }
+    h1 { margin: 0 0 12px; }
+    .grid { display: grid; gap: 16px; }
+    .two { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .card { background: #fff; border: 1px solid #d9e2ec; border-radius: 10px; padding: 16px; box-shadow: 0 4px 14px rgba(31,41,51,0.08); }
+    label { display: block; font-size: 13px; margin-bottom: 4px; color: #52606d; }
+    input, select, button, textarea {
+      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd2d9; background: #fff; font-size: 14px; box-sizing: border-box;
+    }
+    button { cursor: pointer; border: none; color: #fff; background: linear-gradient(135deg, #2563eb, #4f46e5); }
+    button.secondary { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+    th { background: #f8fafc; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: 12px; background: #e0f2fe; color: #075985; }
+    .muted { color: #52606d; font-size: 13px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .row > div { flex: 1 1 140px; }
+    .actions button { width: auto; padding: 6px 10px; font-size: 12px; }
+    .pill { padding: 8px 12px; border-radius: 8px; background: #f8fafc; border: 1px solid #e5e7eb; }
+  </style>
+</head>
+<body>
+  <h1>Personal Expense Tracker</h1>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>Add Income</h3>
+      <div class="grid">
+        <div>
+          <label>Source</label>
+          <input id="incomeSource" placeholder="Salary, stipend, freelance" />
+        </div>
+        <div>
+          <label>Amount</label>
+          <input id="incomeAmount" type="number" min="0" />
+        </div>
+        <div>
+          <label>Date</label>
+          <input id="incomeDate" type="date" />
+        </div>
+      </div>
+      <button style="margin-top:12px" onclick="addIncome()">Add Income</button>
+    </div>
+
+    <div class="card">
+      <h3>Add Expense</h3>
+      <div class="grid">
+        <div class="row">
+          <div>
+            <label>Description</label>
+            <input id="expDesc" placeholder="e.g., Lunch at cafe" />
+          </div>
+          <div>
+            <label>Category</label>
+            <select id="expCat">
+              <option>Food</option><option>Rent</option><option>Travel</option>
+              <option>Entertainment</option><option>Study</option><option>Shopping</option>
+              <option>Health</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Amount</label>
+            <input id="expAmt" type="number" min="0" />
+          </div>
+          <div>
+            <label>Payment Mode</label>
+            <select id="expPay">
+              <option>Cash</option><option>UPI</option><option>Card</option><option>Bank Transfer</option>
+            </select>
+          </div>
+          <div>
+            <label>Date</label>
+            <input id="expDate" type="date" />
+          </div>
+        </div>
+        <div>
+          <label>Notes</label>
+          <textarea id="expNotes" rows="2" placeholder="Optional"></textarea>
+        </div>
+      </div>
+      <button style="margin-top:12px" onclick="addExpense()">Add Expense</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Filters & Search</h3>
+    <div class="row">
+      <div>
+        <label>From</label>
+        <input id="fFrom" type="date" />
+      </div>
+      <div>
+        <label>To</label>
+        <input id="fTo" type="date" />
+      </div>
+      <div>
+        <label>Category</label>
+        <select id="fCat">
+          <option value="">All</option>
+          <option>Food</option><option>Rent</option><option>Travel</option>
+          <option>Entertainment</option><option>Study</option><option>Shopping</option>
+          <option>Health</option><option>Other</option>
+        </select>
+      </div>
+      <div>
+        <label>Min Amount</label>
+        <input id="fMin" type="number" min="0" />
+      </div>
+      <div>
+        <label>Max Amount</label>
+        <input id="fMax" type="number" min="0" />
+      </div>
+      <div>
+        <label>Search Notes/Description</label>
+        <input id="fSearch" placeholder="Search text" />
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button style="width:auto" onclick="render()">Apply</button>
+      <button class="secondary" style="width:auto" onclick="resetFilters()">Reset</button>
+    </div>
+  </div>
+
+  <div class="grid two" style="margin-top:16px">
+    <div class="card">
+      <h3>Summary</h3>
+      <div class="grid">
+        <div class="pill">
+          <div class="muted">Total Income</div>
+          <div id="sumIncome" style="font-size:20px;font-weight:700">$0</div>
+        </div>
+        <div class="pill">
+          <div class="muted">Total Expenses</div>
+          <div id="sumExpense" style="font-size:20px;font-weight:700">$0</div>
+        </div>
+        <div class="pill">
+          <div class="muted">Savings (Income − Expenses)</div>
+          <div id="sumSavings" style="font-size:20px;font-weight:700">$0</div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <div class="pill">
+          <div class="muted">Daily Spend (avg)</div>
+          <div id="sumDaily">$0</div>
+        </div>
+        <div class="pill">
+          <div class="muted">Weekly Spend (avg)</div>
+          <div id="sumWeekly">$0</div>
+        </div>
+        <div class="pill">
+          <div class="muted">Monthly Spend (avg)</div>
+          <div id="sumMonthly">$0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Category Breakdown</h3>
+      <div id="catBreakdown" class="grid"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Expenses</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Mode</th><th>Notes</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="expTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const expenses = [];
+    const incomes = [];
+    const fmt = n => '$' + Number(n || 0).toLocaleString();
+
+    function addIncome() {
+      const source = incomeSource.value.trim();
+      const amount = Number(incomeAmount.value);
+      const date = incomeDate.value || today();
+      if (!source || !amount) return alert('Source and amount required');
+      incomes.push({ id: crypto.randomUUID(), source, amount, date });
+      incomeSource.value = ''; incomeAmount.value = ''; incomeDate.value = '';
+      render();
+    }
+
+    function addExpense() {
+      const desc = expDesc.value.trim();
+      const cat = expCat.value;
+      const amt = Number(expAmt.value);
+      const pay = expPay.value;
+      const date = expDate.value || today();
+      const notes = expNotes.value.trim();
+      if (!desc || !amt) return alert('Description and amount required');
+      expenses.push({ id: crypto.randomUUID(), desc, cat, amt, pay, date, notes });
+      expDesc.value = ''; expAmt.value = ''; expNotes.value = ''; expDate.value = '';
+      render();
+    }
+
+    function deleteExpense(id) {
+      const i = expenses.findIndex(e => e.id === id);
+      if (i >= 0) expenses.splice(i, 1);
+      render();
+    }
+
+    function editExpense(id) {
+      const item = expenses.find(e => e.id === id);
+      if (!item) return;
+      expDesc.value = item.desc;
+      expCat.value = item.cat;
+      expAmt.value = item.amt;
+      expPay.value = item.pay;
+      expDate.value = item.date;
+      expNotes.value = item.notes;
+      deleteExpense(id); // simple replace workflow
+    }
+
+    function resetFilters() {
+      fFrom.value = fTo.value = fCat.value = fMin.value = fMax.value = fSearch.value = '';
+      render();
+    }
+
+    function applyFilters(list) {
+      return list.filter(e => {
+        if (fFrom.value && e.date < fFrom.value) return false;
+        if (fTo.value && e.date > fTo.value) return false;
+        if (fCat.value && e.cat !== fCat.value) return false;
+        if (fMin.value && e.amt < Number(fMin.value)) return false;
+        if (fMax.value && e.amt > Number(fMax.value)) return false;
+        const q = fSearch.value.trim().toLowerCase();
+        if (q && !(e.desc.toLowerCase().includes(q) || (e.notes||'').toLowerCase().includes(q))) return false;
+        return true;
+      });
+    }
+
+    function render() {
+      const filtered = applyFilters(expenses);
+
+      // table
+      expTable.innerHTML = filtered.map(e => `
+        <tr>
+          <td>${e.date}</td>
+          <td>${e.desc}</td>
+          <td><span class="badge">${e.cat}</span></td>
+          <td>${fmt(e.amt)}</td>
+          <td>${e.pay}</td>
+          <td class="muted">${e.notes || ''}</td>
+          <td class="actions">
+            <button class="secondary" onclick="editExpense('${e.id}')">Edit</button>
+            <button style="background:#ef4444" onclick="deleteExpense('${e.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+
+      // summary
+      const totalIncome = incomes.reduce((s,i)=>s+i.amount,0);
+      const totalExpense = expenses.reduce((s,e)=>s+e.amt,0);
+      sumIncome.textContent = fmt(totalIncome);
+      sumExpense.textContent = fmt(totalExpense);
+      sumSavings.textContent = fmt(totalIncome - totalExpense);
+
+      // averages (simple)
+      const byDate = {};
+      expenses.forEach(e => { byDate[e.date] = (byDate[e.date]||0)+e.amt; });
+      const days = Object.keys(byDate).length || 1;
+      const daily = Object.values(byDate).reduce((s,v)=>s+v,0)/days;
+      sumDaily.textContent = fmt(daily);
+      sumWeekly.textContent = fmt(daily*7);
+      sumMonthly.textContent = fmt(daily*30);
+
+      // category breakdown
+      const catTotals = {};
+      expenses.forEach(e => { catTotals[e.cat] = (catTotals[e.cat]||0)+e.amt; });
+      catBreakdown.innerHTML = Object.entries(catTotals).map(([cat,amt]) => `
+        <div class="pill">
+          <div class="muted">${cat}</div>
+          <div style="font-weight:700">${fmt(amt)}</div>
+        </div>
+      `).join('') || '<div class="muted">No expenses yet</div>';
+    }
+
+    const today = () => new Date().toISOString().slice(0,10);
+    render();
+  </script>
+</body>
+</html>
